@@ -21,35 +21,49 @@ package org.sonar.server.app;
 
 
 import ch.qos.logback.classic.Level;
-import org.junit.Test;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class HelloWorldServiceTest {
-  @Test
-  public void greets() {
+class HelloWorldServiceTest {
+  private ListAppender<ILoggingEvent> listAppender;
+
+  @BeforeEach
+  public void before() {
     Logger logger = (Logger) LoggerFactory.getLogger(HelloWorldService.class);
 
     // Testing the logging inspired by https://stackoverflow.com/a/52229629
-    ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
+    listAppender = new ListAppender<>();
     listAppender.start();
     logger.addAppender(listAppender);
+  }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"LOG8371", "TP1"})
+  void greetsLOG8371(String name) {
     HelloWorldService service = new HelloWorldService();
-    service.greet("LOG8371");
+    service.greet(name);
 
     List<ILoggingEvent> logs = listAppender.list;
     assertThat(logs).hasSize(1);
 
     ILoggingEvent log = logs.get(0);
 
-    assertThat(log.getFormattedMessage()).isEqualTo("Hello World LOG8371!");
+    assertThat(log.getFormattedMessage()).isEqualTo("Hello World " + name +"!");
     assertThat(log.getLevel()).isEqualTo(Level.INFO);
+  }
+
+  @AfterEach
+  public void after() {
+    ((Logger) LoggerFactory.getLogger(HelloWorldService.class)).detachAndStopAllAppenders();
   }
 }
